@@ -8,10 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/MihasBel/test-transactions-servise/adapters/broker"
-	"github.com/MihasBel/test-transactions-servise/deliver"
-
-	"github.com/MihasBel/test-transactions-servise/adapters/pg"
 	"github.com/MihasBel/test-transactions-servise/internal/app"
 	"github.com/MihasBel/test-transactions-servise/pkg/logger"
 	"github.com/jinzhu/configor"
@@ -29,19 +25,13 @@ func main() {
 	}
 	l := logger.New(app.Config)
 	log.Logger = l
-	db := pg.New(app.Config, l)
-	if err := db.Start(context.Background()); err != nil {
-		log.Error().Err(err)
-	}
-	chanRes := make(chan []byte)
-	b := broker.New(app.Config, l, chanRes)
-	application := deliver.New(app.Config, db, b)
+
 	startCtx, startCancel := context.WithTimeout(context.Background(), time.Duration(app.Config.StartTimeout)*time.Second)
 	defer startCancel()
-	if err := application.Start(startCtx); err != nil {
-		log.Fatal().Err(err).Msg("cannot start application") // nolint
+	a := app.New(app.Config)
+	if err := a.Start(startCtx); err != nil {
+		log.Fatal().Err(err).Msg("start error")
 	}
-
 	log.Info().Msg("application started")
 
 	quitCh := make(chan os.Signal, 1)
@@ -50,9 +40,8 @@ func main() {
 
 	stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Duration(app.Config.StartTimeout)*time.Second)
 	defer stopCancel()
-
-	if err := application.Stop(stopCtx); err != nil {
-		log.Error().Err(err).Msg("cannot stop application")
+	if err := a.Stop(stopCtx); err != nil {
+		log.Fatal().Err(err).Msg("stop error")
 	}
 	log.Info().Msg("service is down")
 }

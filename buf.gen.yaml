@@ -1,0 +1,10 @@
+version: v1beta1
+plugins:
+  - name: go
+    out: delivery/grpc/gen
+    opt:
+      - paths=import
+  - name: go-grpc
+    out: delivery/grpc/gen
+    opt:
+      - paths=import,require_unimplemented_servers=false

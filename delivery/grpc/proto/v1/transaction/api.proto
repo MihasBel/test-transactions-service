@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package v1.transaction;
+
+option go_package = "v1/transaction";
+
+import "delivery/grpc/proto/v1/transaction/byid.proto";
+import "delivery/grpc/proto/v1/transaction/model.proto";
+// service to give transaction info
+service TransactionAPI {
+  // Getting transaction info
+  rpc ByID (ByIDRequest) returns (Transaction){}
+}

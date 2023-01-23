@@ -7,8 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/MihasBel/test-transactions-servise/internal/app"
-
 	"github.com/rs/zerolog"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -20,11 +18,11 @@ type PG struct {
 	log  *zerolog.Logger
 	gorm *gorm.DB
 	dsn  string
-	cfg  app.Configuration
+	cfg  Config
 }
 
 // New create new PG
-func New(cfg app.Configuration, l zerolog.Logger) *PG {
+func New(cfg Config, l zerolog.Logger) *PG {
 
 	dsn := fmt.Sprintf(
 		"host=%v user=%v password=%v dbname=%v port=%v sslmode=%v TimeZone=%v",

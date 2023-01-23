@@ -3,7 +3,6 @@ package broker
 import (
 	"context"
 
-	"github.com/MihasBel/test-transactions-servise/internal/app"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog"
 )
@@ -11,13 +10,13 @@ import (
 // Broker represents kafka broker with logger and config
 type Broker struct {
 	b   *kafka.Consumer
-	cfg app.Configuration
+	cfg Config
 	l   zerolog.Logger
 	Ch  chan []byte
 }
 
 // New create new Broker
-func New(cfg app.Configuration, l zerolog.Logger, ch chan []byte) *Broker {
+func New(cfg Config, l zerolog.Logger, ch chan []byte) *Broker {
 
 	return &Broker{
 		Ch:  ch,

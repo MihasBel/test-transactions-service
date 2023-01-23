@@ -1,4 +1,4 @@
-package deliver
+package kafka
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/MihasBel/test-transactions-servise/adapters/broker"
-	"github.com/MihasBel/test-transactions-servise/internal/app"
 	"github.com/MihasBel/test-transactions-servise/internal/rep"
 	model "github.com/MihasBel/test-transactions-servise/models"
 	"github.com/rs/zerolog/log"
@@ -16,18 +15,18 @@ const (
 	tranTopic = "transaction"
 )
 
-// GRPC represent GRPC service
-type GRPC struct {
+// Server represent Server service
+type Server struct {
 	app string
-	cfg app.Configuration
+	cfg Config
 	s   rep.Storage
 	b   *broker.Broker
 }
 
-// New Create new instance of GRPC. Should use only in main.
-func New(config app.Configuration, s rep.Storage, b *broker.Broker) *GRPC {
+// New Create new instance of Server. Should use only in main.
+func New(config Config, s rep.Storage, b *broker.Broker) *Server {
 
-	grpc := GRPC{
+	grpc := Server{
 		app: "",
 		cfg: config,
 		s:   s,
@@ -38,9 +37,8 @@ func New(config app.Configuration, s rep.Storage, b *broker.Broker) *GRPC {
 }
 
 // Start an application
-func (r *GRPC) Start(_ context.Context) error {
+func (r *Server) Start(_ context.Context) error {
 	errCh := make(chan error)
-	log.Debug().Msgf("start listening %q", r.cfg.Address)
 	if err := r.b.Subscribe(context.Background(), tranTopic); err != nil {
 		errCh <- err
 	}
@@ -66,9 +64,8 @@ func (r *GRPC) Start(_ context.Context) error {
 }
 
 // Stop an application
-func (r *GRPC) Stop(_ context.Context) error {
+func (r *Server) Stop(_ context.Context) error {
 	errCh := make(chan error)
-	log.Debug().Msgf("stopping %q", r.cfg.Address)
 	go func() {
 		close(r.b.Ch)
 	}()

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package v1.transaction;
+
+option go_package = "v1/transaction";
+
+import "google/protobuf/timestamp.proto";
+
+// Transaction message
+message Transaction {
+  string id = 1 [json_name = "id"];
+  string user_id = 2 [json_name = "user_id"];
+  int64 amount = 3 [json_name = "amount"];
+  google.protobuf.Timestamp created_at = 4 [json_name = "created_at"];
+  int32 status = 5 [json_name = "status"];
+  string description = 6 [json_name = "description"];
+}

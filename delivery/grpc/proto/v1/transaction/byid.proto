@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package v1.transaction;
+
+option go_package = "v1/transaction";
+
+import "delivery/grpc/proto/v1/transaction/model.proto";
+message ByIDRequest{
+  string id = 1;
+}
+

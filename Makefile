@@ -32,3 +32,5 @@ swag:
 .PHONY: generate
 generate:
 	@go generate ./...
+proto:
+	@buf generate
