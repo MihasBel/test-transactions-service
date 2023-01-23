@@ -3,12 +3,17 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/MihasBel/test-transactions-servise/adapters/broker"
+	"github.com/MihasBel/test-transactions-servise/deliver"
 
 	"github.com/MihasBel/test-transactions-servise/adapters/pg"
 	"github.com/MihasBel/test-transactions-servise/internal/app"
 	"github.com/MihasBel/test-transactions-servise/pkg/logger"
-	"github.com/google/uuid"
 	"github.com/jinzhu/configor"
 	"github.com/rs/zerolog/log"
 )
@@ -28,21 +33,26 @@ func main() {
 	if err := db.Start(context.Background()); err != nil {
 		log.Error().Err(err)
 	}
-	/*err := db.PlaceTransaction(context.Background(), model.Transaction{
-		ID:          uuid.New(),
-		UserID:      uuid.MustParse("c3bb416e-9a47-11ed-a8fc-0242ac120002"),
-		Amount:      -100,
-		CreatedAt:   time.Now(),
-		Status:      0,
-		Description: "in processing",
-	})*/
-	tran, err := db.GetTransactionByID(context.Background(), uuid.MustParse("81f0a860-576d-4b7a-b56a-695442b065f9"))
-	if err != nil {
-		log.Error().Err(err)
-	}
-	log.Debug().Msg(fmt.Sprintln(tran))
-	if err := db.Stop(context.TODO()); err != nil {
-		log.Error().Err(err)
+	chanRes := make(chan []byte)
+	b := broker.New(app.Config, l, chanRes)
+	application := deliver.New(app.Config, db, b)
+	startCtx, startCancel := context.WithTimeout(context.Background(), time.Duration(app.Config.StartTimeout)*time.Second)
+	defer startCancel()
+	if err := application.Start(startCtx); err != nil {
+		log.Fatal().Err(err).Msg("cannot start application") // nolint
 	}
 
+	log.Info().Msg("application started")
+
+	quitCh := make(chan os.Signal, 1)
+	signal.Notify(quitCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	<-quitCh
+
+	stopCtx, stopCancel := context.WithTimeout(context.Background(), time.Duration(app.Config.StartTimeout)*time.Second)
+	defer stopCancel()
+
+	if err := application.Stop(stopCtx); err != nil {
+		log.Error().Err(err).Msg("cannot stop application")
+	}
+	log.Info().Msg("service is down")
 }
