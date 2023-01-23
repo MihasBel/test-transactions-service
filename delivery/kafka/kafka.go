@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/MihasBel/test-transactions-servise/adapters/broker"
-	"github.com/MihasBel/test-transactions-servise/internal/rep"
-	model "github.com/MihasBel/test-transactions-servise/models"
+	"github.com/MihasBel/test-transactions-service/adapters/broker"
+	"github.com/MihasBel/test-transactions-service/internal/rep"
+	model "github.com/MihasBel/test-transactions-service/models"
 	"github.com/rs/zerolog/log"
 )
 

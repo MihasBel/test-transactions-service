@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/MihasBel/test-transactions-servise/internal/app"
-	"github.com/MihasBel/test-transactions-servise/pkg/logger"
+	"github.com/MihasBel/test-transactions-service/internal/app"
+	"github.com/MihasBel/test-transactions-service/pkg/logger"
 	"github.com/jinzhu/configor"
 	"github.com/rs/zerolog/log"
 )

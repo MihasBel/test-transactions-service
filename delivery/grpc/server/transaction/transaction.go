@@ -1,7 +1,7 @@
 package transaction
 
 import (
-	"github.com/MihasBel/test-transactions-servise/internal/rep"
+	"github.com/MihasBel/test-transactions-service/internal/rep"
 )
 
 type Server struct {

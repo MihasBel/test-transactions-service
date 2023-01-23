@@ -3,7 +3,7 @@ package rep
 import (
 	"context"
 
-	model "github.com/MihasBel/test-transactions-servise/models"
+	model "github.com/MihasBel/test-transactions-service/models"
 	"github.com/google/uuid"
 )
 

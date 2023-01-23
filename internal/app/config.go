@@ -1,10 +1,10 @@
 package app
 
 import (
-	"github.com/MihasBel/test-transactions-servise/adapters/broker"
-	"github.com/MihasBel/test-transactions-servise/adapters/pg"
-	"github.com/MihasBel/test-transactions-servise/delivery/grpc/server"
-	"github.com/MihasBel/test-transactions-servise/delivery/kafka"
+	"github.com/MihasBel/test-transactions-service/adapters/broker"
+	"github.com/MihasBel/test-transactions-service/adapters/pg"
+	"github.com/MihasBel/test-transactions-service/delivery/grpc/server"
+	"github.com/MihasBel/test-transactions-service/delivery/kafka"
 )
 
 // Config exported variable to contain config values

@@ -3,9 +3,9 @@ package server
 import (
 	"context"
 	"encoding/json"
-	v1transaction "github.com/MihasBel/test-transactions-servise/delivery/grpc/gen/v1/transaction"
-	"github.com/MihasBel/test-transactions-servise/delivery/grpc/server/transaction"
-	"github.com/MihasBel/test-transactions-servise/internal/rep"
+	v1transaction "github.com/MihasBel/test-transactions-service/delivery/grpc/gen/v1/transaction"
+	"github.com/MihasBel/test-transactions-service/delivery/grpc/server/transaction"
+	"github.com/MihasBel/test-transactions-service/internal/rep"
 	"github.com/rs/zerolog"
 	"net"
 	"time"

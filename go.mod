@@ -1,4 +1,4 @@
-module github.com/MihasBel/test-transactions-servise
+module github.com/MihasBel/test-transactions-service
 
 go 1.19
 
