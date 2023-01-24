@@ -5,7 +5,6 @@ import (
 	"github.com/MihasBel/test-transactions-service/adapters/broker"
 	"github.com/MihasBel/test-transactions-service/adapters/pg"
 	"github.com/MihasBel/test-transactions-service/delivery/grpc/server"
-	"github.com/MihasBel/test-transactions-service/delivery/kafka"
 	"os"
 
 	"github.com/pkg/errors"
@@ -42,14 +41,13 @@ func (a *App) Start(ctx context.Context) error {
 
 	db := pg.New(a.cfg.PG, *a.log)
 	chanRes := make(chan []byte)
-	b := broker.New(a.cfg.Broker, *a.log, chanRes)
-	k := kafka.New(a.cfg.Kafka, db, b)
+	b := broker.New(a.cfg.Broker, *a.log, db, chanRes)
 	srv := server.New(a.cfg.GRPC, db, *a.log)
 
 	a.cmps = append(
 		a.cmps,
 		cmp{db, "storage"},
-		cmp{k, "kafka"},
+		cmp{b, "kafka"},
 		cmp{srv, "grpc"},
 	)
 

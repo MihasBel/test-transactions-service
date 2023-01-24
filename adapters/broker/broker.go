@@ -2,6 +2,11 @@ package broker
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/MihasBel/test-transactions-service/internal/rep"
+	model "github.com/MihasBel/test-transactions-service/models"
+	"github.com/rs/zerolog/log"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog"
@@ -12,16 +17,18 @@ type Broker struct {
 	b   *kafka.Consumer
 	cfg Config
 	l   zerolog.Logger
+	s   rep.Storage
 	Ch  chan []byte
 }
 
 // New create new Broker
-func New(cfg Config, l zerolog.Logger, ch chan []byte) *Broker {
+func New(cfg Config, l zerolog.Logger, s rep.Storage, ch chan []byte) *Broker {
 
 	return &Broker{
 		Ch:  ch,
 		cfg: cfg,
 		l:   l,
+		s:   s,
 	}
 }
 
@@ -70,10 +77,48 @@ func (brk *Broker) Subscribe(ctx context.Context, topic string) (err error) {
 	return nil
 }
 
-// Stop broker
-func (brk *Broker) Stop(_ context.Context) (err error) {
-	if err = brk.b.Close(); err != nil {
-		return err
+// Start a broker
+func (r *Broker) Start(_ context.Context) error {
+	errCh := make(chan error)
+	if err := r.Subscribe(context.Background(), r.cfg.Topic); err != nil {
+		errCh <- err
 	}
-	return nil
+
+	go func() {
+		for val := range r.Ch {
+			tran := model.Transaction{}
+			if err := json.Unmarshal(val, &tran); err != nil {
+				log.Error().Err(err)
+			}
+			if err := r.s.PlaceTransaction(context.Background(), tran); err != nil {
+				log.Error().Err(err)
+			}
+		}
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-time.After(time.Duration(r.cfg.StartTimeout) * time.Second):
+		return nil
+	}
+}
+
+// Stop a broker
+func (r *Broker) Stop(_ context.Context) error {
+	errCh := make(chan error)
+	go func() {
+		if err := r.b.Close(); err != nil {
+			errCh <- err
+		}
+		close(r.Ch)
+	}()
+
+	select {
+	case err := <-errCh:
+		return err
+	case <-time.After(time.Duration(r.cfg.StopTimeout) * time.Second):
+		return nil
+
+	}
 }

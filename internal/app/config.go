@@ -4,7 +4,6 @@ import (
 	"github.com/MihasBel/test-transactions-service/adapters/broker"
 	"github.com/MihasBel/test-transactions-service/adapters/pg"
 	"github.com/MihasBel/test-transactions-service/delivery/grpc/server"
-	"github.com/MihasBel/test-transactions-service/delivery/kafka"
 )
 
 // Config exported variable to contain config values
@@ -13,7 +12,6 @@ var Config Configuration
 // Configuration exported type for config
 type Configuration struct {
 	PG                    pg.Config     `json:"pg"`
-	Kafka                 kafka.Config  `json:"kafka"`
 	Broker                broker.Config `json:"broker"`
 	GRPC                  server.Config `json:"grpc"`
 	StartTimeout          int           `json:"start_timeout"`
