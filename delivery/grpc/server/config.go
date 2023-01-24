@@ -1,5 +1,6 @@
 package server
 
+// Config configuration
 type Config struct {
 	Address      string `json:"address"`
 	StartTimeout int    `json:"start_timeout"`

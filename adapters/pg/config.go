@@ -1,5 +1,6 @@
 package pg
 
+// Config configuration
 type Config struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`

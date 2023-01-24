@@ -2,15 +2,17 @@ package app
 
 import (
 	"context"
+	"os"
+
 	"github.com/MihasBel/test-transactions-service/adapters/broker"
 	"github.com/MihasBel/test-transactions-service/adapters/pg"
 	"github.com/MihasBel/test-transactions-service/delivery/grpc/server"
-	"os"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 )
 
+// Lifecycle to start and stop modules
 type Lifecycle interface {
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
@@ -20,12 +22,14 @@ type cmp struct {
 	Name    string
 }
 
+// App represents application
 type App struct {
 	log  *zerolog.Logger
 	cmps []cmp
 	cfg  Configuration
 }
 
+// New application constructor
 func New(cfg Configuration) *App {
 	l := zerolog.New(os.Stderr).Output(zerolog.ConsoleWriter{Out: os.Stderr}).With().Timestamp().
 		Str("cmp", "app").Logger()
@@ -36,6 +40,7 @@ func New(cfg Configuration) *App {
 	}
 }
 
+// Start an application
 func (a *App) Start(ctx context.Context) error {
 	a.log.Info().Msg("starting app")
 
@@ -73,6 +78,7 @@ func (a *App) Start(ctx context.Context) error {
 	}
 }
 
+// Stop an application
 func (a *App) Stop(ctx context.Context) error {
 	a.log.Info().Msg("shutting down service...")
 

@@ -3,12 +3,13 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"net"
+	"time"
+
 	v1transaction "github.com/MihasBel/test-transactions-service/delivery/grpc/gen/v1/transaction"
 	"github.com/MihasBel/test-transactions-service/delivery/grpc/server/transaction"
 	"github.com/MihasBel/test-transactions-service/internal/rep"
 	"github.com/rs/zerolog"
-	"net"
-	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -19,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// MSGs
 const (
 	TCP = "tcp"
 
@@ -35,10 +37,9 @@ const (
 	KeyLoggerError      = "error"
 
 	ValLoggerDirection = "in"
-
-	KeyMetrics = "metrics"
 )
 
+// Server represents grpc server
 type Server struct {
 	cfg Config
 	srv *grpc.Server
@@ -46,6 +47,7 @@ type Server struct {
 	l   zerolog.Logger
 }
 
+// New Server constructor
 func New(
 	cfg Config,
 	s rep.Storage,
@@ -58,7 +60,8 @@ func New(
 	}
 }
 
-func (s *Server) Start(ctx context.Context) error {
+// Start server
+func (s *Server) Start(_ context.Context) error {
 	lis, err := net.Listen(TCP, s.cfg.Address)
 	if err != nil {
 		return errors.Wrap(err, MsgErrFailedListen)
@@ -90,7 +93,8 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 }
 
-func (s *Server) Stop(ctx context.Context) error {
+// Stop server
+func (s *Server) Stop(_ context.Context) error {
 	s.l.Info().Msgf(MsgStopListening, s.cfg.Address)
 	stopCh := make(chan struct{})
 	go func() {
@@ -105,6 +109,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 }
 
+// ZerologInterceptor logger
 func (s *Server) ZerologInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
 	resp, err := handler(ctx, req)

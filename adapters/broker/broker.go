@@ -3,10 +3,11 @@ package broker
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"github.com/MihasBel/test-transactions-service/internal/rep"
 	model "github.com/MihasBel/test-transactions-service/models"
 	"github.com/rs/zerolog/log"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/rs/zerolog"
@@ -78,19 +79,19 @@ func (brk *Broker) Subscribe(ctx context.Context, topic string) (err error) {
 }
 
 // Start a broker
-func (r *Broker) Start(_ context.Context) error {
+func (brk *Broker) Start(_ context.Context) error {
 	errCh := make(chan error)
-	if err := r.Subscribe(context.Background(), r.cfg.Topic); err != nil {
+	if err := brk.Subscribe(context.Background(), brk.cfg.Topic); err != nil {
 		errCh <- err
 	}
 
 	go func() {
-		for val := range r.Ch {
+		for val := range brk.Ch {
 			tran := model.Transaction{}
 			if err := json.Unmarshal(val, &tran); err != nil {
 				log.Error().Err(err)
 			}
-			if err := r.s.PlaceTransaction(context.Background(), tran); err != nil {
+			if err := brk.s.PlaceTransaction(context.Background(), tran); err != nil {
 				log.Error().Err(err)
 			}
 		}
@@ -99,25 +100,25 @@ func (r *Broker) Start(_ context.Context) error {
 	select {
 	case err := <-errCh:
 		return err
-	case <-time.After(time.Duration(r.cfg.StartTimeout) * time.Second):
+	case <-time.After(time.Duration(brk.cfg.StartTimeout) * time.Second):
 		return nil
 	}
 }
 
 // Stop a broker
-func (r *Broker) Stop(_ context.Context) error {
+func (brk *Broker) Stop(_ context.Context) error {
 	errCh := make(chan error)
 	go func() {
-		if err := r.b.Close(); err != nil {
+		if err := brk.b.Close(); err != nil {
 			errCh <- err
 		}
-		close(r.Ch)
+		close(brk.Ch)
 	}()
 
 	select {
 	case err := <-errCh:
 		return err
-	case <-time.After(time.Duration(r.cfg.StopTimeout) * time.Second):
+	case <-time.After(time.Duration(brk.cfg.StopTimeout) * time.Second):
 		return nil
 
 	}
