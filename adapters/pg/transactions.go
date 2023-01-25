@@ -2,6 +2,9 @@ package pg
 
 import (
 	"context"
+	"database/sql"
+
+	"github.com/pkg/errors"
 
 	model "github.com/MihasBel/test-transactions-service/models"
 	"github.com/google/uuid"
@@ -9,7 +12,9 @@ import (
 )
 
 const (
-	tableName = "transactions"
+	tableName      = "transactions"
+	statusSuccess  = 1
+	statusRejected = 2
 )
 
 type nullAmount struct{}
@@ -25,15 +30,10 @@ func (pg *PG) PlaceTransaction(_ context.Context, tran model.Transaction) error 
 		pg.log.Error().Err(err)
 		return err
 	}
-	anyTran := model.Transaction{}
-	emptyUUID := uuid.UUID{}
-	pg.gorm.Table("transactions").Where("user_id = ? AND status = 1", tran.UserID.String()).First(&anyTran)
-	if anyTran.ID == emptyUUID {
-		return transactionWithNullBalance(pg.gorm, tran)
-	}
+
 	err := pg.gorm.Transaction(func(tx *gorm.DB) error {
 		if tran.Amount > 0 {
-			tran.Status = 1
+			tran.Status = statusSuccess
 			tran.Description = "success"
 			if result := tx.Create(&tran); result.Error != nil {
 				return result.Error
@@ -41,19 +41,22 @@ func (pg *PG) PlaceTransaction(_ context.Context, tran model.Transaction) error 
 			return nil
 		}
 		balance := 0
-		row := tx.Table("transactions").Select("SUM(amount)").Where("user_id = ? AND status = 1", tran.UserID.String()).Row()
+		row := tx.Table("transactions").Select("COALESCE(SUM(amount), 0)").Where("user_id = ? AND status = 1", tran.UserID.String()).Row()
 		if err := row.Scan(&balance); err != nil {
-			return err
+			if !errors.Is(err, sql.ErrNoRows) {
+				return err
+			}
+
 		}
-		if balance+tran.Amount > 0 {
-			tran.Status = 1
+		if balance+tran.Amount >= 0 {
+			tran.Status = statusSuccess
 			tran.Description = "success"
 			if result := tx.Create(&tran); result.Error != nil {
 				return result.Error
 			}
 			return nil
 		}
-		tran.Status = 2
+		tran.Status = statusRejected
 		tran.Description = "rejected"
 		if result := tx.Table(tableName).Create(&tran); result.Error != nil {
 			return result.Error
@@ -65,26 +68,6 @@ func (pg *PG) PlaceTransaction(_ context.Context, tran model.Transaction) error 
 		pg.log.Error().Err(err)
 	}
 	return nil
-}
-func transactionWithNullBalance(db *gorm.DB, tran model.Transaction) error {
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if tran.Amount > 0 {
-			tran.Status = 1
-			tran.Description = "success"
-			if result := tx.Create(&tran); result.Error != nil {
-				return result.Error
-			}
-			return nil
-		}
-		tran.Status = 2
-		tran.Description = "rejected"
-		if result := tx.Table(tableName).Create(&tran); result.Error != nil {
-			return result.Error
-		}
-		return nil
-
-	})
-	return err
 }
 
 // GetTransactionByID get transaction from pg DB
