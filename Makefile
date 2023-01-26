@@ -6,8 +6,8 @@ mod:
 build:
 	go build \
 			--trimpath \
-			-o bin/app/product-details \
-			cmd/http/main.go
+			-o bin/app/test-transaction-service \
+			cmd/main.go
 
 .PHONY: check
 check:

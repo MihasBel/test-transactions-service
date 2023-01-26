@@ -1,0 +1,27 @@
+FROM golang:1.19.1-alpine as builder
+
+ENV CGO_ENABLED=1
+
+RUN apk update && apk add --no-cache make git build-base musl-dev librdkafka librdkafka-dev
+WORKDIR /go/src/github.com/test-transaction-service
+COPY . ./
+
+RUN echo "build binary"
+RUN    export PATH=$PATH:/usr/local/go/bin
+RUN    go mod download
+RUN    go build -tags musl /go/src/github.com/test-transaction-service/cmd/main.go
+RUN    mkdir -p /test-transaction-service && \
+    mv main /test-transaction-service/main && \
+    rm -Rf /usr/local/go/src
+
+
+
+FROM alpine:latest as app
+WORKDIR /test-transaction-service
+COPY --from=builder /test-transaction-service/. /test-transaction-service/
+RUN  mkdir -p /configs && \
+           mkdir -p /local
+COPY configs/docker-local/env.json ./configs/local/env.json
+CMD ./main
+
+EXPOSE 8090

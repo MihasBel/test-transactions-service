@@ -1,0 +1,74 @@
+version: "3.9"
+
+services:
+
+  kafka-ui:
+    container_name: transaction-kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - '8080:8080'
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_started
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+  zookeeper:
+    image: bitnami/zookeeper:3.8.0
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: unless-stopped
+    container_name: transaction-zookeeper
+    volumes:
+      - ./volumes/zookeeper:/bitnami/zookeeper
+  kafka:
+    image: bitnami/kafka:3.3.1
+    ports:
+      - '9092:9092'
+      - '9093:9093'
+    hostname: kafka
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9093,EXTERNAL://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9093,EXTERNAL://localhost:9092
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_DELETE_TOPIC_ENABLE=true
+    volumes:
+      - ./volumes/kafka:/bitnami/kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_started
+    healthcheck:
+      test: kafka-topics.sh --list --bootstrap-server localhost:9092
+      interval: 120s
+      timeout: 60s
+      retries: 5
+  cache:
+    image: redis:6.2-alpine
+    hostname: redis
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+    volumes:
+      - cache:/data
+  postgres:
+    image: postgres:13.3
+    hostname: postgres
+    environment:
+      POSTGRES_DB: "trandb"
+      POSTGRES_USER: "tranuser"
+      POSTGRES_PASSWORD: "tranpassword"
+    ports:
+      - "5433:5432"
+volumes:
+  cache:
+    driver: local
