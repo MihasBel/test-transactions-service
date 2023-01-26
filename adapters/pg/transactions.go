@@ -76,5 +76,11 @@ func (pg *PG) GetTransactionByID(_ context.Context, id uuid.UUID) (model.Transac
 	if err := pg.gorm.Table(tableName).Where("id=?", id.String()).First(&tran).Error; err != nil {
 		pg.log.Error().Err(err)
 	}
+
+	if tran.ID == uuid.Nil {
+		err := errors.New("transaction not found")
+		pg.log.Error().Err(err)
+		return tran, err
+	}
 	return tran, nil
 }
